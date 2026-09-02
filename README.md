@@ -1,73 +1,47 @@
-# Nemotron 3.5 Lightning · vLLM · DGX Spark (GB10)
+# Nemotron 3.5 Lightning · vLLM · 1× DGX Spark
 
-**Easy one-command recipe** to run  
-[`nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4`](https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4)  
-on a **single NVIDIA DGX Spark** with stock **vLLM 0.27.1**.
+Serve [nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4](https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4) on one NVIDIA DGX Spark (GB10) at tensor-parallel 1.
 
-Hybrid Mamba-2 + MoE · **30B total / ~3B active** · **NVFP4** · optional **DSpark** speculative decoding.
+30B total / 3B active. Hybrid Mamba-2 + MoE. NVFP4 (ModelOpt mixed, fp8 KV). Native context is 1,048,576. This recipe serves `--max-model-len` 262144 with the DSpark drafter (3 speculative tokens).
 
----
+Stock `vllm/vllm-openai:v0.27.1` is the arm64 image that runs on sm_121. `docker pull` it. There is no local `docker/` chain.
 
-## Measured on 1× DGX Spark (L.A.I.L lab)
+Pinned snapshot: `cc84af2fe71647d87f4486c064f320e1e7535243`. DSpark draft [`nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark`](https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark) is not pinned; `run.sh` downloads it next to the main weights.
 
-| Metric | Result |
-|--------|--------|
-| Decode (c=1, median) | **~93 tok/s** |
-| Prefill (c=1, median) | **~678 tok/s** |
-| TTFT p50 | **~246 ms** |
-| TPOT p50 | **~10.7 ms** |
-| Mixed agent bench | **20/20 OK** |
+## Hardware
 
-Stack for those numbers: **vLLM 0.27.1**, util **0.8**, max-len **262k**, **DSpark** (3 draft tokens), marlin MoE, ModelOpt mixed, FP8 KV.  
-Run id: `20260812T131332Z_d0f7ae`.
-
-> Other public Spark numbers use different engines (e.g. SGLang ~112 tok/s single stream). This recipe is the **vLLM path** that works out of the box on ARM64 Spark.
-
----
-
-## Requirements
-
-- **DGX Spark (GB10)** with Docker + NVIDIA Container Toolkit
-- ~**25–35 GiB** free disk for weights (+ draft)
-- Prefer **≥15 GiB free system RAM** after load (this recipe uses `gpu-memory-utilization 0.8`)
-- Hugging Face access (public model; token recommended for rate limits)
+- One DGX Spark (GB10) with Docker + NVIDIA Container Toolkit
+- About 25–35 GiB free disk for the weights plus the DSpark draft
+- Exclusive GPU. Do not start this recipe while another `--gpus all` serve is up.
 
 ```bash
-# Optional
 hf auth login
 # or: export HF_TOKEN=hf_...
 ```
 
----
-
 ## Quick start
 
 ```bash
-git clone https://github.com/sfxnz/Nemotron-3.5-Lightning-vLLM-DGX-Spark.git
-cd Nemotron-3.5-Lightning-vLLM-DGX-Spark
-
+docker pull vllm/vllm-openai:v0.27.1
 chmod +x run.sh stop.sh
+VALIDATE_ONLY=1 ./run.sh   # checks the defaults, no Docker
 ./run.sh
 ```
 
-First run:
-
-1. Pulls `vllm/vllm-openai:v0.27.1` if needed  
-2. Downloads main + DSpark draft weights into `~/.cache/huggingface` (resumable)  
-3. Starts container **`spark-nemotron-lightning`** on **port 8000**
+Single node (`NNODES=1`). The head does not copy itself to `spark2`.
 
 Smoke test:
 
 ```bash
-curl -s http://127.0.0.1:8000/v1/models | jq .
 curl -s http://127.0.0.1:8000/v1/chat/completions \
   -H 'Content-Type: application/json' \
   -d '{
     "model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4",
     "messages": [{"role": "user", "content": "Say hello in one sentence."}],
     "max_tokens": 64,
+    "temperature": 0,
     "chat_template_kwargs": {"enable_thinking": false}
-  }' | jq .
+  }'
 ```
 
 Stop:
@@ -76,144 +50,75 @@ Stop:
 ./stop.sh
 ```
 
----
+## Defaults
 
-## What the script runs
+`recipe.yaml` is the source of truth. Edit it, then run `python3 kit/render.py`. CI fails when this table or the `run.sh` block drifts from it.
 
-Defaults (edit `run.sh` or env vars — see below):
-
-| Setting | Default |
-|---------|---------|
-| Image | `vllm/vllm-openai:v0.27.1` |
+<!-- BEGIN generated defaults from recipe.yaml — edit recipe.yaml and run kit/render.py -->
+| Setting | Value |
+|---|---|
+| Image | `vllm/vllm-openai:v0.27.1` (stock, `docker pull`) |
 | Model | `nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4` |
-| Draft (DSpark) | `…-NVFP4-DSpark` |
-| `--gpu-memory-utilization` | **0.8** (safer than card’s 0.91 on a shared Spark) |
-| `--max-model-len` | **262144** |
-| `--quantization` | `modelopt_mixed` |
+| Checkpoint | `cc84af2fe71647d87f4486c064f320e1e7535243` |
+| `--tensor-parallel-size` / `--nnodes` | 1 / 1 |
+| `--max-model-len` | 262144 |
+| `--max-num-seqs` | 4 |
+| `--gpu-memory-utilization` | 0.80 |
 | `--kv-cache-dtype` | `fp8` |
-| `--moe-backend` | `marlin` |
-| `--max-num-seqs` | `4` |
-| Reasoning / tools | `nemotron_v3` / `qwen3_coder` + auto tool choice |
-| Speculative | DSpark, 3 draft tokens |
-| Mamba | `flashinfer` + `align` |
-| Arch env | `CUTE_DSL_ARCH=sm_121a`, `TORCH_CUDA_ARCH_LIST=12.1a` |
+| `--kv-cache-memory` | not pinned yet (`KV_CACHE_MEMORY` is empty; vLLM decides) |
+| `--block-size` | vLLM default (`BLOCK_SIZE` is empty) |
+| CUDA graphs | on (`ENFORCE_EAGER=1` reverts to `--enforce-eager`) |
+| Quantization / MoE | `modelopt_mixed` / `marlin` (in `EXTRA_ARGS`) |
+| Speculative | DSpark, 3 draft tokens (in `EXTRA_ARGS`) |
+| Draft | `nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark` (not pinned) |
+| Reasoning / tools | `nemotron_v3` / `qwen3_coder` + auto tool choice (in `EXTRA_ARGS`) |
+| Mamba | `flashinfer` + `align` (in `EXTRA_ARGS`) |
+| API | `http://<head>:8000/v1` |
+| Container | `nemotron-3-5-lightning-vllm-dgx-spark` |
+| Master port | 29500 |
+<!-- END generated defaults -->
 
-Card-official util is often **0.91** and context **up to 1M**. On a lab box that also runs agents/UI, **0.8 + 262k** left ~15 GiB available in our tests; **0.91** pushed free RAM toward ~1 GiB and used swap.
+`run.sh` refuses `--max-model-len` above 262144 unless `FORCE_UNSAFE_CTX=1`. Native / card-official window is 1,048,576. Lab default stays 262144 at util 0.80. `FORCE_UNSAFE_CTX=1 MAX_MODEL_LEN=1048576 ./run.sh` is the override.
 
----
+## Measured on 1× DGX Spark (L.A.I.L lab)
 
-## Environment knobs
+Decode only. Streamed greedy, thinking off, 200 completion tokens, 3-run median. util 0.80, fp8 KV, context 262144, DSpark-3, CUDA graphs. Prose is the low-acceptance regime. Structured (count 1→200) is the high-acceptance regime. `python3 kit/bench_decode.py --recipe . --phase both --out evidence/<unit>-<UTC>` repeats both phases at c=1,2 and writes `bench.txt` + `bench.json`.
 
-```bash
-export HF_TOKEN=hf_...              # optional
-export PORT=8000
-export UTIL=0.8                     # try 0.7 if you need more free RAM
-export MAX_MODEL_LEN=262144         # try 65536 for more headroom
-export ENABLE_DSPARK=1              # set 0 to skip draft model
-export CONTAINER_NAME=spark-nemotron-lightning
-export VLLM_IMAGE=vllm/vllm-openai:v0.27.1
+<!-- BEGIN generated measured from recipe.yaml — edit recipe.yaml and run kit/render.py -->
+| Phase | Concurrency | Decode tok/s (median per stream) | Aggregate tok/s | TTFT p50 |
+|---|---|---:|---:|---:|
+| prose | 1 | TODO | TODO | TODO s |
+| prose | 2 | TODO | TODO | TODO s |
+| structured | 1 | TODO | TODO | TODO s |
+| structured | 2 | TODO | TODO | TODO s |
+<!-- END generated measured -->
 
-./run.sh
-```
+Prefill and needle results wait on the gate. Do not copy numbers from an older README; they have no file under `evidence/`.
 
-**Lab-friendly (more free RAM):**
+## Agent-readiness probes
 
-```bash
-UTIL=0.7 MAX_MODEL_LEN=65536 ENABLE_DSPARK=0 ./run.sh
-```
+One result per probe after the gate. Each has a receipt under `evidence/`.
 
-**Closer to NVIDIA Spark card (aggressive):**
+| Probe | Result |
+|---|---|
+| Thinking off, no `<think>` leak in `content` | TODO |
+| Tool call parsed (`get_weather`) | TODO |
+| Tool follow-up (`role: tool`) answers without a think leak | TODO |
+| Greedy count 1→200 consecutive | TODO |
+| Unique-salt needle at 8192 prompt tokens | TODO |
 
-```bash
-UTIL=0.91 MAX_MODEL_LEN=1048576 ./run.sh
-```
+## Evidence
 
----
+Every number above has a file under [`evidence/`](evidence/). `recipe.yaml` names the file per measured row. `python3 kit/render.py --check` lists the rows that still have none. See [`evidence/README.md`](evidence/README.md).
 
-## OpenAI-compatible API
+## Gotchas
 
-| | |
-|--|--|
-| Base URL | `http://127.0.0.1:8000/v1` |
-| Model id | `nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4` |
-
-Thinking (when you want it):
-
-```json
-"chat_template_kwargs": { "enable_thinking": true }
-```
-
----
-
-## Troubleshooting
-
-| Symptom | Fix |
-|---------|-----|
-| `Temporary failure in name resolution` during download | Network/DNS glitch — re-run `./run.sh` (HF cache resumes) |
-| OOM / only ~1 GiB free | Lower `UTIL` (0.7), lower `MAX_MODEL_LEN`, or `ENABLE_DSPARK=0` |
-| Port in use | `PORT=8001 ./run.sh` or `./stop.sh` first |
-| Container already exists | `./stop.sh` then `./run.sh` |
-| Slow first boot | Waiting on HF download (~20 GiB main + draft) |
-
-Logs:
-
-```bash
-docker logs -f spark-nemotron-lightning
-```
-
----
-
-## Manual docker (no script)
-
-```bash
-# weights (once)
-hf download nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4
-hf download nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark
-
-docker pull vllm/vllm-openai:v0.27.1
-
-docker run -d --name spark-nemotron-lightning --gpus all --shm-size=4g \
-  -p 127.0.0.1:8000:8000 \
-  -v "$HOME/.cache/huggingface:/cache/huggingface" \
-  -e HF_HOME=/cache/huggingface \
-  -e CUTE_DSL_ARCH=sm_121a \
-  -e TORCH_CUDA_ARCH_LIST=12.1a \
-  -e FLASHINFER_CUDA_ARCH_LIST=12.1a \
-  ${HF_TOKEN:+-e HF_TOKEN=$HF_TOKEN} \
-  vllm/vllm-openai:v0.27.1 \
-  nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4 \
-  --host 0.0.0.0 --port 8000 \
-  --tensor-parallel-size 1 \
-  --gpu-memory-utilization 0.8 \
-  --max-model-len 262144 \
-  --trust-remote-code \
-  --quantization modelopt_mixed \
-  --kv-cache-dtype fp8 \
-  --moe-backend marlin \
-  --max-num-seqs 4 \
-  --enable-auto-tool-choice \
-  --tool-call-parser qwen3_coder \
-  --reasoning-parser nemotron_v3 \
-  --enable-prefix-caching \
-  --mamba-backend flashinfer \
-  --mamba-cache-mode align \
-  --speculative_config.method dspark \
-  --speculative_config.num_speculative_tokens 3 \
-  --speculative_config.model nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark
-```
-
----
-
-## References
-
-- Model card: [NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4](https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4)
-- DSpark draft: […-NVFP4-DSpark](https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark)
-- vLLM image: [`vllm/vllm-openai:v0.27.1`](https://hub.docker.com/r/vllm/vllm-openai)
-- Lab automation that produced this recipe: [L.A.I.L](https://github.com/sfxnz/L.A.I.L)
-
----
+- Pin `NCCL_IB_HCA`. GB10 exposes four HCAs and two of them are DOWN. Unpinned NCCL picks a dead one and fails with `unhandled system error`.
+- Stock `vllm/vllm-openai:v0.27.1` is the image. Do not swap in an untested tag.
+- `run.sh` refuses `--max-model-len` above 262144 unless `FORCE_UNSAFE_CTX=1`.
+- DSpark draft is a second download and is not pinned by `SNAPSHOT_SHA`.
+- `SPEC_CONFIG` stays empty on purpose. JSON with double quotes in `serve.env` loses quotes in bash. Spec flags live in `EXTRA_ARGS` as dotted vLLM words.
 
 ## License
 
-Recipe scripts: MIT.  
-Model weights: see NVIDIA’s model license on Hugging Face ([OpenMDW-1.1](https://openmdw.ai/license/1-1/) as listed on the card).
+Recipe scripts are MIT. Model weights follow the base model license on Hugging Face (OpenMDW-1.1).
