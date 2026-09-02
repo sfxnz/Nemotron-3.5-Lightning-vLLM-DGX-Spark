@@ -57,7 +57,10 @@ serve:
     SNAPSHOT_SHA: *revision
     SKIP_DOWNLOAD: 0
     ORCHESTRATE: auto
-    EXTRA_ARGS: "--quantization modelopt_mixed --moe-backend marlin --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser nemotron_v3 --enable-prefix-caching --mamba-backend flashinfer --mamba-cache-mode align --speculative_config.method dspark --speculative_config.num_speculative_tokens 3 --speculative_config.model nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark"
+    EXTRA_ARGS: "--quantization modelopt_mixed --moe-backend marlin --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser nemotron_v3 --enable-prefix-caching --mamba-backend flashinfer --mamba-cache-mode align --speculative_config.method dspark --speculative_config.num_speculative_tokens 3"
+    # The draft is pinned like the main model; run.sh passes its snapshot path as --speculative_config.model.
+    DRAFT: nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark
+    DRAFT_SHA: d10c6ff40d6e69d1f92e407e027de3eafdb77645
 
 readme:
   # Rows of the README "Defaults" table. {NAME} is replaced by serve.env.NAME.
@@ -75,7 +78,7 @@ readme:
     - CUDA graphs: "on (`ENFORCE_EAGER=1` reverts to `--enforce-eager`)"
     - Quantization / MoE: "`modelopt_mixed` / `marlin` (in `EXTRA_ARGS`)"
     - Speculative: "DSpark, 3 draft tokens (in `EXTRA_ARGS`)"
-    - Draft: "`nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark` (not pinned)"
+    - Draft: "`{DRAFT}` @ `{DRAFT_SHA}`"
     - "Reasoning / tools": "`nemotron_v3` / `qwen3_coder` + auto tool choice (in `EXTRA_ARGS`)"
     - Mamba: "`flashinfer` + `align` (in `EXTRA_ARGS`)"
     - API: "`http://<head>:{PORT}/v1`"

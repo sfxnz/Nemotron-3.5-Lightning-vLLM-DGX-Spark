@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# vendored from sfxnz/forge kit @ 4fe8603
+# vendored from sfxnz/forge kit @ 6d330a6
 """Clone-shape checks for any recipe repo. No GPU, no serve. Usage: python3 kit/recipe_lint.py <recipe-dir>
 
 Generic checks (every recipe):

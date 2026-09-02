@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# vendored from sfxnz/forge kit @ 4fe8603
+# vendored from sfxnz/forge kit @ 6d330a6
 """Hermes-style tools loop: user -> parsed tool_calls -> role=tool -> assistant content, no think leak.
 
     kit/probes/hermes_two_turn.py <recipe-dir> <evidence-dir>

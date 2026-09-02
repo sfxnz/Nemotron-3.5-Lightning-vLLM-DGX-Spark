@@ -1,4 +1,4 @@
-# vendored from sfxnz/forge kit @ 4fe8603
+# vendored from sfxnz/forge kit @ 6d330a6
 """Shared Python helpers for the kit: recipe.yaml access and one JSON POST.
 
 Every kit script takes a recipe directory. The values it needs (port, served model name,

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# vendored from sfxnz/forge kit @ 4fe8603
+# vendored from sfxnz/forge kit @ 6d330a6
 """Prefill a unique needle near the end of a long prompt and check the completion contains it.
 
 Pass/fail for a context window. Not a tok/s bench. --concurrency N fires N unique-salt

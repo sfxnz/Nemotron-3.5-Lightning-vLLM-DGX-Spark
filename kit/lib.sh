@@ -1,4 +1,4 @@
-# vendored from sfxnz/forge kit @ 4fe8603
+# vendored from sfxnz/forge kit @ 6d330a6
 # shellcheck shell=bash
 # Shared helpers for the recipe kit. Source from kit/*.sh and kit/probes/*.sh:
 #   source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"; recipe_load "$1"

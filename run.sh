@@ -33,10 +33,13 @@ SNAPSHOT="${HF_CACHE}/hub/models--${MODEL//\//--}/snapshots/${SNAPSHOT_SHA}"
 SNAPSHOT_IN_CONTAINER="${HF_HOME_IN_CONTAINER}/hub/models--${MODEL//\//--}/snapshots/${SNAPSHOT_SHA}"
 SKIP_DOWNLOAD="${SKIP_DOWNLOAD:-0}"
 ORCHESTRATE="${ORCHESTRATE:-auto}"
-EXTRA_ARGS="${EXTRA_ARGS:---quantization modelopt_mixed --moe-backend marlin --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser nemotron_v3 --enable-prefix-caching --mamba-backend flashinfer --mamba-cache-mode align --speculative_config.method dspark --speculative_config.num_speculative_tokens 3 --speculative_config.model nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark}"
+EXTRA_ARGS="${EXTRA_ARGS:---quantization modelopt_mixed --moe-backend marlin --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser nemotron_v3 --enable-prefix-caching --mamba-backend flashinfer --mamba-cache-mode align --speculative_config.method dspark --speculative_config.num_speculative_tokens 3}"
+DRAFT="${DRAFT:-nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark}"
+DRAFT_SHA="${DRAFT_SHA:-d10c6ff40d6e69d1f92e407e027de3eafdb77645}"
 # END generated
 
-DRAFT="${DRAFT:-nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark}"
+DRAFT_SNAPSHOT="${HF_CACHE}/hub/models--${DRAFT//\//--}/snapshots/${DRAFT_SHA}"
+DRAFT_IN_CONTAINER="${HF_HOME_IN_CONTAINER}/hub/models--${DRAFT//\//--}/snapshots/${DRAFT_SHA}"
 FORCE_UNSAFE_CTX="${FORCE_UNSAFE_CTX:-0}"
 
 # Lab default is 262144 at UTIL 0.80. Native 1,048,576 is card-official.
@@ -46,8 +49,8 @@ if [[ "$MAX_MODEL_LEN" -gt 262144 && "$FORCE_UNSAFE_CTX" != 1 ]]; then
 fi
 
 if [[ "${VALIDATE_ONLY:-0}" == "1" ]]; then
-  printf '==> validate-only image=%s snapshot=%s ctx=%s seqs=%s spec=%s eager=%s compilation=%s\n' \
-    "$IMAGE" "$SNAPSHOT_SHA" "$MAX_MODEL_LEN" "$MAX_NUM_SEQS" "${SPEC_CONFIG:-none}" "$ENFORCE_EAGER" "${COMPILATION_CONFIG:-default}"
+  printf '==> validate-only image=%s snapshot=%s draft=%s ctx=%s seqs=%s spec=%s eager=%s compilation=%s\n' \
+    "$IMAGE" "$SNAPSHOT_SHA" "$DRAFT_SHA" "$MAX_MODEL_LEN" "$MAX_NUM_SEQS" "${SPEC_CONFIG:-none}" "$ENFORCE_EAGER" "${COMPILATION_CONFIG:-default}"
   exit 0
 fi
 
@@ -119,17 +122,24 @@ ensure_weights() {
       echo "No hf CLI on PATH and snapshot $SNAPSHOT is missing" >&2
       exit 1
     fi
-    # DSpark draft is not pinned by SNAPSHOT_SHA.
-    if [[ -n "$HF" ]]; then
+    # DSpark draft: pinned by DRAFT_SHA, downloaded only while its snapshot is missing.
+    if [[ -d "$DRAFT_SNAPSHOT" ]]; then
+      log "Using pinned draft snapshot $DRAFT_SNAPSHOT"
+    elif [[ -n "$HF" ]]; then
       export HF_HUB_DISABLE_XET="${HF_HUB_DISABLE_XET:-1}"
-      log "Downloading DSpark draft $DRAFT (not pinned; resumes under $HF_CACHE)"
-      "$HF" download "$DRAFT"
+      log "Downloading DSpark draft $DRAFT revision $DRAFT_SHA (resumes under $HF_CACHE)"
+      "$HF" download "$DRAFT" --revision "$DRAFT_SHA"
     else
-      log "No hf CLI on PATH — skipping DSpark host download; vLLM will pull $DRAFT on first load"
+      echo "No hf CLI on PATH and draft snapshot $DRAFT_SNAPSHOT is missing" >&2
+      exit 1
     fi
   fi
   if [[ ! -d "$SNAPSHOT" ]]; then
     echo "Pinned snapshot missing: $SNAPSHOT" >&2
+    exit 1
+  fi
+  if [[ ! -d "$DRAFT_SNAPSHOT" ]]; then
+    echo "Pinned draft snapshot missing: $DRAFT_SNAPSHOT" >&2
     exit 1
   fi
 }
@@ -222,6 +232,8 @@ start_local() {
   if [[ -n "$SPEC_CONFIG" ]]; then
     opt_args+=(--speculative-config "$SPEC_CONFIG")
   fi
+  # The draft is served from its pinned snapshot path so vLLM never reaches for the hub.
+  opt_args+=(--speculative_config.model "$DRAFT_IN_CONTAINER")
 
   # The image ENTRYPOINT is `vllm serve`; the first argument is the model path.
   log "Starting $CONTAINER_NAME rank=$rank model=$serve_model ctx=$MAX_MODEL_LEN kv=${KV_CACHE_MEMORY:-auto} eager=$ENFORCE_EAGER"
@@ -298,7 +310,7 @@ if [[ "$ORCHESTRATE" == "auto" && "$ROLE" == "head" ]]; then
     printf '%s\n' "$WORKER_HOST" >"${PWD}/.run-state/worker_host"
     scp -q "$0" "${WORKER_HOST}:/tmp/${CONTAINER_NAME}-run.sh"
     ssh "$WORKER_HOST" \
-      "ROLE=worker ORCHESTRATE=0 MODEL='$MODEL' SERVED_NAME='$SERVED_NAME' IMAGE='$IMAGE' CONTAINER_NAME='$CONTAINER_NAME' PORT='$PORT' MASTER_PORT='$MASTER_PORT' HEAD_IP='$HEAD_IP' IFACE='$IFACE' HCA='$HCA' TP='$TP' NNODES='$NNODES' MAX_MODEL_LEN='$MAX_MODEL_LEN' MAX_NUM_SEQS='$MAX_NUM_SEQS' UTIL='$UTIL' KV_CACHE_DTYPE='$KV_CACHE_DTYPE' KV_CACHE_MEMORY='$KV_CACHE_MEMORY' BLOCK_SIZE='$BLOCK_SIZE' MAX_NUM_BATCHED_TOKENS='$MAX_NUM_BATCHED_TOKENS' SPEC_CONFIG='$SPEC_CONFIG' COMPILATION_CONFIG='$COMPILATION_CONFIG' ENFORCE_EAGER='$ENFORCE_EAGER' HF_CACHE='$HF_CACHE' SNAPSHOT_SHA='$SNAPSHOT_SHA' SKIP_DOWNLOAD='$SKIP_DOWNLOAD' EXTRA_ARGS='$EXTRA_ARGS' FORCE_UNSAFE_CTX='$FORCE_UNSAFE_CTX' DRAFT='$DRAFT' bash /tmp/${CONTAINER_NAME}-run.sh"
+      "ROLE=worker ORCHESTRATE=0 MODEL='$MODEL' SERVED_NAME='$SERVED_NAME' IMAGE='$IMAGE' CONTAINER_NAME='$CONTAINER_NAME' PORT='$PORT' MASTER_PORT='$MASTER_PORT' HEAD_IP='$HEAD_IP' IFACE='$IFACE' HCA='$HCA' TP='$TP' NNODES='$NNODES' MAX_MODEL_LEN='$MAX_MODEL_LEN' MAX_NUM_SEQS='$MAX_NUM_SEQS' UTIL='$UTIL' KV_CACHE_DTYPE='$KV_CACHE_DTYPE' KV_CACHE_MEMORY='$KV_CACHE_MEMORY' BLOCK_SIZE='$BLOCK_SIZE' MAX_NUM_BATCHED_TOKENS='$MAX_NUM_BATCHED_TOKENS' SPEC_CONFIG='$SPEC_CONFIG' COMPILATION_CONFIG='$COMPILATION_CONFIG' ENFORCE_EAGER='$ENFORCE_EAGER' HF_CACHE='$HF_CACHE' SNAPSHOT_SHA='$SNAPSHOT_SHA' SKIP_DOWNLOAD='$SKIP_DOWNLOAD' EXTRA_ARGS='$EXTRA_ARGS' FORCE_UNSAFE_CTX='$FORCE_UNSAFE_CTX' DRAFT='$DRAFT' DRAFT_SHA='$DRAFT_SHA' bash /tmp/${CONTAINER_NAME}-run.sh"
     log "Worker container started. Waiting 25s for NCCL listen, then starting head"
     sleep 25
   fi

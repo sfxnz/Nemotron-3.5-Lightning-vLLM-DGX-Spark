@@ -3,3 +3,5 @@
 !evidence/**/*.log
 .DS_Store
 .build/
+__pycache__/
+*.pyc

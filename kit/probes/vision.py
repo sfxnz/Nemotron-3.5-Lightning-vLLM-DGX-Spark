@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# vendored from sfxnz/forge kit @ 4fe8603
+# vendored from sfxnz/forge kit @ 6d330a6
 """Vision smoke: one image_url request. Fail on HTTP error, `is not a multimodal model`, or a
 missing expected word.
 

@@ -6,7 +6,7 @@ Serve [nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4](https://huggingface.c
 
 Stock `vllm/vllm-openai:v0.27.1` is the arm64 image that runs on sm_121. `docker pull` it. There is no local `docker/` chain.
 
-Pinned snapshot: `cc84af2fe71647d87f4486c064f320e1e7535243`. DSpark draft [`nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark`](https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark) is not pinned; `run.sh` downloads it next to the main weights.
+Pinned snapshot: `cc84af2fe71647d87f4486c064f320e1e7535243`. DSpark draft [`nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark`](https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark) is pinned to `d10c6ff40d6e69d1f92e407e027de3eafdb77645` (`DRAFT_SHA`); `run.sh` downloads it once next to the main weights and serves it from that snapshot.
 
 ## Hardware
 
@@ -70,7 +70,7 @@ Stop:
 | CUDA graphs | on (`ENFORCE_EAGER=1` reverts to `--enforce-eager`) |
 | Quantization / MoE | `modelopt_mixed` / `marlin` (in `EXTRA_ARGS`) |
 | Speculative | DSpark, 3 draft tokens (in `EXTRA_ARGS`) |
-| Draft | `nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark` (not pinned) |
+| Draft | `nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark` @ `d10c6ff40d6e69d1f92e407e027de3eafdb77645` |
 | Reasoning / tools | `nemotron_v3` / `qwen3_coder` + auto tool choice (in `EXTRA_ARGS`) |
 | Mamba | `flashinfer` + `align` (in `EXTRA_ARGS`) |
 | API | `http://<head>:8000/v1` |
@@ -116,7 +116,7 @@ Every number above has a file under [`evidence/`](evidence/). `recipe.yaml` name
 - Pin `NCCL_IB_HCA`. GB10 exposes four HCAs and two of them are DOWN. Unpinned NCCL picks a dead one and fails with `unhandled system error`.
 - Stock `vllm/vllm-openai:v0.27.1` is the image. Do not swap in an untested tag.
 - `run.sh` refuses `--max-model-len` above 262144 unless `FORCE_UNSAFE_CTX=1`.
-- DSpark draft is a second download and is not pinned by `SNAPSHOT_SHA`.
+- DSpark draft is a second download, pinned by `DRAFT_SHA` (not `SNAPSHOT_SHA`). Its cache dir may be root-owned from an in-container download; `run.sh` never re-downloads a snapshot that exists.
 - `SPEC_CONFIG` stays empty on purpose. JSON with double quotes in `serve.env` loses quotes in bash. Spec flags live in `EXTRA_ARGS` as dotted vLLM words.
 
 ## License

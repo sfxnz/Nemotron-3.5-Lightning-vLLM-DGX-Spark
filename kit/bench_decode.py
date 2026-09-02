@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# vendored from sfxnz/forge kit @ 4fe8603
+# vendored from sfxnz/forge kit @ 6d330a6
 """Streamed decode bench against a live OpenAI-compatible /v1/chat/completions. The frozen ruler.
 
     kit/bench_decode.py --recipe <recipe-dir> --phase prose|structured|both --out <evidence-dir>

@@ -1,4 +1,4 @@
-# vendored from sfxnz/forge kit @ 4fe8603
+# vendored from sfxnz/forge kit @ 6d330a6
 # Regenerate the marked blocks of run.sh and README.md from recipe.yaml.
 #
 #   python3 kit/render.py            rewrite the generated blocks in place
