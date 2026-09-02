@@ -1,0 +1,65 @@
+{
+ "unit": "rehearsal-nemotron",
+ "lane": "spark1",
+ "utc": "20260902T234001Z",
+ "recipe": "/home/sfxnz/projects/ai-lab/.wt/Nemotron-modernize",
+ "dry_run": false,
+ "evidence_dir": "evidence/rehearsal-nemotron-20260902T234001Z",
+ "ready_seconds": 287,
+ "probes_pass": true,
+ "gates": {
+  "validate": true,
+  "ready": true,
+  "probes": true,
+  "bench": true
+ },
+ "result": "pass",
+ "bench": {
+  "rows": [
+   {
+    "phase": "prose",
+    "concurrency": 1,
+    "decode": 88.47025282019956,
+    "aggregate": 88.42208592257386,
+    "ttft_p50": 0.08689895199495368,
+    "completion_tokens": 106,
+    "n": 3,
+    "acceptance_len": 2.1399999999999997,
+    "draft_acceptance_rate": 0.38
+   },
+   {
+    "phase": "prose",
+    "concurrency": 2,
+    "decode": 74.53702889565577,
+    "aggregate": 144.2314341237382,
+    "ttft_p50": 0.0897541455051396,
+    "completion_tokens": 106.5,
+    "n": 6,
+    "acceptance_len": 2.1575342465753424,
+    "draft_acceptance_rate": 0.3858447488584475
+   },
+   {
+    "phase": "structured",
+    "concurrency": 1,
+    "decode": 163.0252138384481,
+    "aggregate": 162.91104358689682,
+    "ttft_p50": 0.06624088698299602,
+    "completion_tokens": 200,
+    "n": 3,
+    "acceptance_len": 3.9607843137254903,
+    "draft_acceptance_rate": 0.9869281045751634
+   },
+   {
+    "phase": "structured",
+    "concurrency": 2,
+    "decode": 133.460812953196,
+    "aggregate": 262.5012472734211,
+    "ttft_p50": 0.11333607950655278,
+    "completion_tokens": 200.0,
+    "n": 6,
+    "acceptance_len": 3.9607843137254903,
+    "draft_acceptance_rate": 0.9869281045751634
+   }
+  ]
+ }
+}

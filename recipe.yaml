@@ -89,13 +89,13 @@ measured:
   # The README decode table. One row per (phase, concurrency); a row's three numbers come from one
   # bench_decode.py run. evidence: the file under evidence/ that contains them, or null while there is none.
   decode:
-    conditions: streamed greedy, thinking off, 200 completion tokens, 3-run median; util 0.80, fp8 KV, context 262144, DSpark-3, CUDA graphs
+    conditions: streamed greedy, thinking off, 200 completion tokens max, 3-run median; util 0.80, fp8 KV, context 262144, DSpark-3, CUDA graphs
     units: {decode: tok/s per stream (median), aggregate: tok/s, ttft_p50: s}
     rows:
-      - {phase: prose, concurrency: 1, decode: TODO, aggregate: TODO, ttft_p50: TODO, evidence: null}
-      - {phase: prose, concurrency: 2, decode: TODO, aggregate: TODO, ttft_p50: TODO, evidence: null}
-      - {phase: structured, concurrency: 1, decode: TODO, aggregate: TODO, ttft_p50: TODO, evidence: null}
-      - {phase: structured, concurrency: 2, decode: TODO, aggregate: TODO, ttft_p50: TODO, evidence: null}
+      - {phase: prose, concurrency: 1, decode: 88.5, aggregate: 88.4, ttft_p50: 0.087, evidence: evidence/rehearsal-nemotron-20260902T234001Z/bench.json}
+      - {phase: prose, concurrency: 2, decode: 74.5, aggregate: 144.2, ttft_p50: 0.090, evidence: evidence/rehearsal-nemotron-20260902T234001Z/bench.json}
+      - {phase: structured, concurrency: 1, decode: 163.0, aggregate: 162.9, ttft_p50: 0.066, evidence: evidence/rehearsal-nemotron-20260902T234001Z/bench.json}
+      - {phase: structured, concurrency: 2, decode: 133.5, aggregate: 262.5, ttft_p50: 0.113, evidence: evidence/rehearsal-nemotron-20260902T234001Z/bench.json}
 
 links:
   model: https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4
@@ -117,7 +117,7 @@ probes:
 
 lint:
   # kit/recipe_lint.py: recipe-specific expectations. Generic checks live in the script.
-  strict_evidence: false                         # true once every measured row names an evidence file
+  strict_evidence: true                          # every measured row names an evidence file
   required_files: []
   contains:
     README.md:

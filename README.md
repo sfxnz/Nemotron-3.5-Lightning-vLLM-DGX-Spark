@@ -82,30 +82,33 @@ Stop:
 
 ## Measured on 1× DGX Spark (L.A.I.L lab)
 
-Decode only. Streamed greedy, thinking off, 200 completion tokens, 3-run median. util 0.80, fp8 KV, context 262144, DSpark-3, CUDA graphs. Prose is the low-acceptance regime. Structured (count 1→200) is the high-acceptance regime. `python3 kit/bench_decode.py --recipe . --phase both --out evidence/<unit>-<UTC>` repeats both phases at c=1,2 and writes `bench.txt` + `bench.json`.
+Decode only. Streamed greedy, thinking off, 200 completion tokens max, 3-run median. util 0.80, fp8 KV, context 262144, DSpark-3, CUDA graphs. Prose is the low-acceptance regime. Structured (count 1→200) is the high-acceptance regime. `python3 kit/bench_decode.py --recipe . --phase both --out evidence/<unit>-<UTC>` repeats both phases at c=1,2 and writes `bench.txt` + `bench.json`.
 
 <!-- BEGIN generated measured from recipe.yaml — edit recipe.yaml and run kit/render.py -->
 | Phase | Concurrency | Decode tok/s (median per stream) | Aggregate tok/s | TTFT p50 |
 |---|---|---:|---:|---:|
-| prose | 1 | TODO | TODO | TODO s |
-| prose | 2 | TODO | TODO | TODO s |
-| structured | 1 | TODO | TODO | TODO s |
-| structured | 2 | TODO | TODO | TODO s |
+| prose | 1 | 88.5 | 88.4 | 0.087 s |
+| prose | 2 | 74.5 | 144.2 | 0.090 s |
+| structured | 1 | 163.0 | 162.9 | 0.066 s |
+| structured | 2 | 133.5 | 262.5 | 0.113 s |
 <!-- END generated measured -->
 
-Prefill and needle results wait on the gate. Do not copy numbers from an older README; they have no file under `evidence/`.
+Rows from `evidence/rehearsal-nemotron-20260902T234001Z/bench.json` (gate unit `rehearsal-nemotron`, ready after 287 s). Prose stopped at 106 completion tokens (EOS before the 200 cap); structured used all 200. Draft acceptance in the same file: prose 0.38, structured 0.99 (`draft_acceptance_rate`).
+
+Needle: hit at 21855 prompt tokens, prefill 5742.8 tok/s, TTFT 3.806 s (`evidence/rehearsal-nemotron-20260902T234001Z/needle-8192.txt`; the probe targets 8192 tokens, the Nemotron tokenizer counts 21855). Do not copy numbers from an older README; they have no file under `evidence/`.
 
 ## Agent-readiness probes
 
-One result per probe after the gate. Each has a receipt under `evidence/`.
+From `evidence/rehearsal-nemotron-20260902T234001Z/probes.json` (`"failed": 0`). Each row names its receipt.
 
 | Probe | Result |
 |---|---|
-| Thinking off, no `<think>` leak in `content` | TODO |
-| Tool call parsed (`get_weather`) | TODO |
-| Tool follow-up (`role: tool`) answers without a think leak | TODO |
-| Greedy count 1→200 consecutive | TODO |
-| Unique-salt needle at 8192 prompt tokens | TODO |
+| Smoke (`Say hello`, greedy) | PASS (`smoke.txt`) |
+| Thinking off, no `<think>` leak in `content` | PASS (`thinking_off.txt`) |
+| Tool call parsed (`get_weather`) | PASS (`tool_call.txt`) |
+| Tool follow-up (`role: tool`) answers without a think leak | PASS (`hermes_two_turn.txt`) |
+| Greedy count 1→200 consecutive | PASS (`count.txt`) |
+| Unique-salt needle, 21855 prompt tokens | PASS (`needle-8192.txt`) |
 
 ## Evidence
 

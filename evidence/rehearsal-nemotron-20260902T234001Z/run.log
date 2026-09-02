@@ -1,0 +1,17 @@
+==> role=head host=spark1
+==> Ensuring image vllm/vllm-openai:v0.27.1
+==> Using pinned snapshot /home/sfxnz/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4/snapshots/cc84af2fe71647d87f4486c064f320e1e7535243
+==> Using pinned draft snapshot /home/sfxnz/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark/snapshots/d10c6ff40d6e69d1f92e407e027de3eafdb77645
+==> Starting nemotron-3-5-lightning-vllm-dgx-spark rank=0 model=/cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4/snapshots/cc84af2fe71647d87f4486c064f320e1e7535243 ctx=262144 kv=auto eager=0
+d499c54f5c5cefde3feceadff25566e0b61a0ad10bafa6917e11fe03030cdcdd
+==> Waiting for http://127.0.0.1:8000/v1/models
+==> still loading… (12×5s) — docker logs -f nemotron-3-5-lightning-vllm-dgx-spark
+==> still loading… (24×5s) — docker logs -f nemotron-3-5-lightning-vllm-dgx-spark
+==> still loading… (36×5s) — docker logs -f nemotron-3-5-lightning-vllm-dgx-spark
+==> still loading… (48×5s) — docker logs -f nemotron-3-5-lightning-vllm-dgx-spark
+==> Ready → http://127.0.0.1:8000/v1  (context=262144)
+{"object":"list","data":[{"id":"nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4","object":"model","created":1788392687,"owned_by":"vllm","root":"/cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4/snapshots/cc84af2fe71647d87f4486c064f320e1e7535243","parent":null,"max_model_len":262144,"permission":[{"id":"modelperm-ac62a07f4653c80b","object":"model_permission","created":1788392687,"allow_create_engine":false,"allow_sampling":true,"allow_logprobs":true,"allow_search_indices":false,"allow_view":true,"allow_fine_tuning":false,"organization":"*","group":null,"is_blocking":false}]}]}
+
+==> Stop with: ./stop.sh
+Stopping nemotron-3-5-lightning-vllm-dgx-spark
+Stopped local nemotron-3-5-lightning-vllm-dgx-spark
