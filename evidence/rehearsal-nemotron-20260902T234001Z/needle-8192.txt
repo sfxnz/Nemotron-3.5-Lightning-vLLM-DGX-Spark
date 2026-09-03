@@ -1,0 +1,22 @@
+--- request
+{
+  "url": "http://127.0.0.1:8000/v1/chat/completions",
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4",
+  "prompt_tokens": 8192,
+  "concurrency": 1,
+  "needle": "NEEDLECODE-7F3A91C2",
+  "salts": [
+    "S1788392693971189578"
+  ],
+  "max_tokens": 64,
+  "chat_template_kwargs": {
+    "enable_thinking": false
+  },
+  "prompt_head": "The history of sparse attention is a long story about memory S1788392693971189578. The history of sparse attention is a long story about memory S1788392693971189578. The history of sparse attention is"
+}
+hit=1 prompt_tokens=21855 wall_s=3.895 ttft_s=3.806 prefill_tok_s=5742.8 salt=S1788392693971189578 needle=NEEDLECODE-7F3A91C2
+SUMMARY {"hit": 1, "prompt_tokens": 21855, "wall_s": 3.895, "ttft_s": 3.806, "prefill_tok_s": 5742.8, "salt": "S1788392693971189578"}
+--- response content
+NEEDLECODE-7F3A91C2
+http_status=200
+verdict=PASS

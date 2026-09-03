@@ -1,0 +1,138 @@
+# Source of truth for the values that repeat across run.sh, README.md and CI.
+# Edit here, then `python3 kit/render.py`. CI runs `python3 kit/render.py --check`.
+# Every scalar is used as the string you typed (0.80 stays 0.80). `null` means none.
+# `&name` anchors a value; `*name` reuses it, so a pinned value is written once.
+# Replace every TODO. Keep the section order; render.py reads serve.env, readme.defaults, measured.decode.
+
+model:
+  id: &model nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4                 # Hugging Face repo id
+  revision: &revision cc84af2fe71647d87f4486c064f320e1e7535243   # the snapshot run.sh pins and downloads
+  served_name: &served_name nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4  # what /v1/models reports
+  family: nemotron_h                                   # e.g. GLM-5.3-Flash
+  params: 30B total / 3B active               # e.g. 320B total / 18B active
+  quant: NVFP4 (ModelOpt mixed; fp8 KV)                                    # e.g. NVFP4 (weight-only, routed experts)
+
+image:
+  base: vllm/vllm-openai:v0.27.1        # the FROM line of docker/Dockerfile.*
+  digest: null                                   # sha256:... when the base is digest-pinned
+  local_tag: &image vllm/vllm-openai:v0.27.1         # what `docker build -t` produces on both nodes
+  build: none (stock arm64 image; docker pull)                  # the Dockerfile chain, in order
+
+engine:
+  name: vllm
+  version: v0.27.1                               # the vLLM release inside the image, if the tag pins one
+
+hardware:
+  shape: 1x DGX Spark (GB10)
+  nnodes: &nnodes 1
+  tp: &tp 1
+
+serve:
+  # The `# BEGIN generated` block of run.sh, in run.sh order. Each key renders as NAME="${NAME:-value}".
+  # Empty string means "not set; vLLM decides". Add a key here and its line in run.sh together.
+  env:
+    MODEL: *model
+    SERVED_NAME: *served_name
+    IMAGE: *image
+    CONTAINER_NAME: nemotron-3-5-lightning-vllm-dgx-spark
+    PORT: 8000
+    MASTER_PORT: 29500
+    HEAD_IP: 10.100.8.1
+    WORKER_HOST: spark2
+    IFACE: enp1s0f1np1
+    HCA: rocep1s0f1
+    TP: *tp
+    NNODES: *nnodes
+    MAX_MODEL_LEN: 262144
+    MAX_NUM_SEQS: 4
+    UTIL: 0.80
+    KV_CACHE_DTYPE: fp8
+    KV_CACHE_MEMORY: ""
+    BLOCK_SIZE: ""
+    MAX_NUM_BATCHED_TOKENS: ""
+    SPEC_CONFIG: ""
+    COMPILATION_CONFIG: ""
+    ENFORCE_EAGER: 0
+    HF_CACHE: $HOME/.cache/huggingface
+    SNAPSHOT_SHA: *revision
+    SKIP_DOWNLOAD: 0
+    ORCHESTRATE: auto
+    EXTRA_ARGS: "--quantization modelopt_mixed --moe-backend marlin --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser nemotron_v3 --enable-prefix-caching --mamba-backend flashinfer --mamba-cache-mode align --speculative_config.method dspark --speculative_config.num_speculative_tokens 3"
+    # The draft is pinned like the main model; run.sh passes its snapshot path as --speculative_config.model.
+    DRAFT: nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark
+    DRAFT_SHA: d10c6ff40d6e69d1f92e407e027de3eafdb77645
+
+readme:
+  # Rows of the README "Defaults" table. {NAME} is replaced by serve.env.NAME.
+  defaults:
+    - Image: "`{IMAGE}` (stock, `docker pull`)"
+    - Model: "`{MODEL}`"
+    - Checkpoint: "`{SNAPSHOT_SHA}`"
+    - "`--tensor-parallel-size` / `--nnodes`": "{TP} / {NNODES}"
+    - "`--max-model-len`": "{MAX_MODEL_LEN}"
+    - "`--max-num-seqs`": "{MAX_NUM_SEQS}"
+    - "`--gpu-memory-utilization`": "{UTIL}"
+    - "`--kv-cache-dtype`": "`{KV_CACHE_DTYPE}`"
+    - "`--kv-cache-memory`": "not pinned yet (`KV_CACHE_MEMORY` is empty; vLLM decides)"
+    - "`--block-size`": "vLLM default (`BLOCK_SIZE` is empty)"
+    - CUDA graphs: "on (`ENFORCE_EAGER=1` reverts to `--enforce-eager`)"
+    - Quantization / MoE: "`modelopt_mixed` / `marlin` (in `EXTRA_ARGS`)"
+    - Speculative: "DSpark, 3 draft tokens (in `EXTRA_ARGS`)"
+    - Draft: "`{DRAFT}` @ `{DRAFT_SHA}`"
+    - "Reasoning / tools": "`nemotron_v3` / `qwen3_coder` + auto tool choice (in `EXTRA_ARGS`)"
+    - Mamba: "`flashinfer` + `align` (in `EXTRA_ARGS`)"
+    - API: "`http://<head>:{PORT}/v1`"
+    - Container: "`{CONTAINER_NAME}`"
+    - Master port: "{MASTER_PORT}"
+
+measured:
+  # The README decode table. One row per (phase, concurrency); a row's three numbers come from one
+  # bench_decode.py run. evidence: the file under evidence/ that contains them, or null while there is none.
+  decode:
+    conditions: streamed greedy, thinking off, 200 completion tokens max, 3-run median; util 0.80, fp8 KV, context 262144, DSpark-3, CUDA graphs
+    units: {decode: tok/s per stream (median), aggregate: tok/s, ttft_p50: s}
+    rows:
+      - {phase: prose, concurrency: 1, decode: 88.5, aggregate: 88.4, ttft_p50: 0.087, evidence: evidence/rehearsal-nemotron-20260902T234001Z/bench.json}
+      - {phase: prose, concurrency: 2, decode: 74.5, aggregate: 144.2, ttft_p50: 0.090, evidence: evidence/rehearsal-nemotron-20260902T234001Z/bench.json}
+      - {phase: structured, concurrency: 1, decode: 163.0, aggregate: 162.9, ttft_p50: 0.066, evidence: evidence/rehearsal-nemotron-20260902T234001Z/bench.json}
+      - {phase: structured, concurrency: 2, decode: 133.5, aggregate: 262.5, ttft_p50: 0.113, evidence: evidence/rehearsal-nemotron-20260902T234001Z/bench.json}
+
+links:
+  model: https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4
+  repo: https://github.com/sfxnz/Nemotron-3.5-Lightning-vLLM-DGX-Spark
+
+bench:
+  # kit/bench_decode.py: URL is http://127.0.0.1:{PORT}/v1/chat/completions, model is model.served_name.
+  # Every kit probe sends the same kwargs. Nemotron turns thinking off with enable_thinking.
+  chat_template_kwargs: {enable_thinking: false}
+
+probes:
+  # kit/probes/run-all.sh runs these in order. A bare name has no params; {name: params} passes them.
+  - smoke
+  - count
+  - thinking_off
+  - tool_call
+  - hermes_two_turn
+  - needle: [8192]
+
+lint:
+  # kit/recipe_lint.py: recipe-specific expectations. Generic checks live in the script.
+  strict_evidence: true                          # every measured row names an evidence file
+  required_files: []
+  contains:
+    README.md:
+      - Recipe scripts are MIT
+      - ./run.sh
+      - ./stop.sh
+      - python3 kit/bench_decode.py
+      - http://127.0.0.1:8000/v1/chat/completions
+      - Say hello in one sentence.
+    run.sh:
+      - FORCE_UNSAFE_CTX
+  readme_mentions_env: [IMAGE, PORT, MAX_MODEL_LEN, MAX_NUM_SEQS, SERVED_NAME, CONTAINER_NAME]
+  dockerfile_from: {}                            # stock image; no docker/ chain
+  expect_cases:
+    - {env: {MAX_MODEL_LEN: "1048576", FORCE_UNSAFE_CTX: "1"}, expect: validate-only}
+  refuse_cases:
+    - {env: {MAX_MODEL_LEN: "1048576"}, expect: exceeds the lab 262144 window}
+  commands: []

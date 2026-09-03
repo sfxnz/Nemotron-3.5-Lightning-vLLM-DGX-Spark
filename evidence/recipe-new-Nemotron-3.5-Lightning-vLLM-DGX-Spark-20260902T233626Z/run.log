@@ -1,0 +1,68 @@
+==> role=head host=spark1
+==> Ensuring image vllm/vllm-openai:v0.27.1
+==> Using pinned snapshot /home/sfxnz/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4/snapshots/cc84af2fe71647d87f4486c064f320e1e7535243
+==> Downloading DSpark draft nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark (not pinned; resumes under /home/sfxnz/.cache/huggingface)
+Ignored error while writing tree cache file /home/sfxnz/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark/trees/8a0177116d138011e63103110f136ec0ca09ebbf.json: [Errno 13] Permission denied: '/home/sfxnz/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark/trees/tmpj94tkfrg.tmp'
+Ignored error while writing commit hash to /home/sfxnz/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark/refs/main: [Errno 13] Permission denied: '/home/sfxnz/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark/refs/main'.
+Traceback (most recent call last):
+  File "/home/sfxnz/.local/bin/hf", line 10, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/sfxnz/.hf-cli/venv/lib/python3.12/site-packages/huggingface_hub/cli/hf.py", line 133, in main
+    app()
+  File "/home/sfxnz/.hf-cli/venv/lib/python3.12/site-packages/click/core.py", line 1631, in __call__
+    return self.main(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sfxnz/.hf-cli/venv/lib/python3.12/site-packages/click/core.py", line 1552, in main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File "/home/sfxnz/.hf-cli/venv/lib/python3.12/site-packages/huggingface_hub/cli/_cli_utils.py", line 131, in invoke
+    return super().invoke(ctx)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/sfxnz/.hf-cli/venv/lib/python3.12/site-packages/click/core.py", line 2032, in invoke
+    return _process_result(sub_ctx.command.invoke(sub_ctx))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sfxnz/.hf-cli/venv/lib/python3.12/site-packages/click/core.py", line 1415, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sfxnz/.hf-cli/venv/lib/python3.12/site-packages/click/core.py", line 910, in invoke
+    return callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sfxnz/.hf-cli/venv/lib/python3.12/site-packages/huggingface_hub/cli/_framework.py", line 365, in handler
+    return func(**call_kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/sfxnz/.hf-cli/venv/lib/python3.12/site-packages/huggingface_hub/cli/download.py", line 225, in download
+    _print_result(run_download())
+                  ^^^^^^^^^^^^^^
+  File "/home/sfxnz/.hf-cli/venv/lib/python3.12/site-packages/huggingface_hub/cli/download.py", line 187, in run_download
+    return snapshot_download(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/sfxnz/.hf-cli/venv/lib/python3.12/site-packages/huggingface_hub/utils/_validators.py", line 88, in _inner_fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/sfxnz/.hf-cli/venv/lib/python3.12/site-packages/huggingface_hub/_snapshot_download.py", line 522, in snapshot_download
+    hf_thread_map(
+  File "/home/sfxnz/.hf-cli/venv/lib/python3.12/site-packages/huggingface_hub/utils/tqdm.py", line 441, in hf_thread_map
+    results[future_to_index[future]] = future.result()
+                                       ^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/usr/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sfxnz/.hf-cli/venv/lib/python3.12/site-packages/huggingface_hub/_snapshot_download.py", line 502, in _inner_hf_hub_download
+    hf_hub_download(  # type: ignore
+  File "/home/sfxnz/.hf-cli/venv/lib/python3.12/site-packages/huggingface_hub/utils/_validators.py", line 88, in _inner_fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/sfxnz/.hf-cli/venv/lib/python3.12/site-packages/huggingface_hub/file_download.py", line 1027, in hf_hub_download
+    return _hf_hub_download_to_cache_dir(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sfxnz/.hf-cli/venv/lib/python3.12/site-packages/huggingface_hub/file_download.py", line 1205, in _hf_hub_download_to_cache_dir
+    os.makedirs(os.path.dirname(pointer_path), exist_ok=True)
+  File "<frozen os>", line 225, in makedirs
+PermissionError: [Errno 13] Permission denied: '/home/sfxnz/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark/snapshots/8a0177116d138011e63103110f136ec0ca09ebbf'
+No local container named nemotron-3-5-lightning-vllm-dgx-spark

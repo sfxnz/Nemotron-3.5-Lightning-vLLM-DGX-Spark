@@ -1,0 +1,1 @@
+==> validate-only image=vllm/vllm-openai:v0.27.1 snapshot=cc84af2fe71647d87f4486c064f320e1e7535243 draft=d10c6ff40d6e69d1f92e407e027de3eafdb77645 ctx=262144 seqs=4 spec=none eager=0 compilation=default

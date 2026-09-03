@@ -1,0 +1,20 @@
+{
+ "unit": "recipe-new-Nemotron-3.5-Lightning-vLLM-DGX-Spark",
+ "lane": "spark1",
+ "utc": "20260902T233626Z",
+ "recipe": "/home/sfxnz/projects/ai-lab/.wt/Nemotron-modernize",
+ "dry_run": false,
+ "evidence_dir": "evidence/recipe-new-Nemotron-3.5-Lightning-vLLM-DGX-Spark-20260902T233626Z",
+ "ready_seconds": null,
+ "probes_pass": false,
+ "gates": {
+  "validate": true,
+  "ready": false,
+  "probes": false,
+  "bench": false
+ },
+ "result": "fail",
+ "bench": {
+  "rows": []
+ }
+}

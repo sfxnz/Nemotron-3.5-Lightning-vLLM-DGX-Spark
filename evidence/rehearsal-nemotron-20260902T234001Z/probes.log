@@ -1,0 +1,36 @@
+==> probe smoke
+ok model=nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4 chars=127
+verdict=PASS
+evidence=/home/sfxnz/projects/ai-lab/.wt/Nemotron-modernize/evidence/rehearsal-nemotron-20260902T234001Z/smoke.txt
+==> probe smoke PASS
+==> probe count
+consecutive=124 need=80 nums=124
+verdict=PASS
+evidence=/home/sfxnz/projects/ai-lab/.wt/Nemotron-modernize/evidence/rehearsal-nemotron-20260902T234001Z/count.txt
+==> probe count PASS
+==> probe thinking_off
+content_chars=4 leaked_think=0 reasoning_chars=0 reasoning_leak=0
+SUMMARY {"content": "PING", "reasoning_content": ""}
+verdict=PASS
+evidence=/home/sfxnz/projects/ai-lab/.wt/Nemotron-modernize/evidence/rehearsal-nemotron-20260902T234001Z/thinking_off.txt
+==> probe thinking_off PASS
+==> probe tool_call
+n_tool_calls=1 names=['get_weather'] finish_reason=tool_calls content_chars=0
+SUMMARY {"tool_calls": [{"id": "chatcmpl-tool-b3717c335e92a9c2", "type": "function", "function": {"name": "get_weather", "arguments": "{\"city\": \"Wellington\"}"}}], "finish_reason": "tool_calls"}
+verdict=PASS
+evidence=/home/sfxnz/projects/ai-lab/.wt/Nemotron-modernize/evidence/rehearsal-nemotron-20260902T234001Z/tool_call.txt
+==> probe tool_call PASS
+==> probe hermes_two_turn
+turn1 http=200 n_tool_calls=1 names=['get_weather']
+turn2 http=200 content_chars=71 leaked_think=0
+SUMMARY {"turn1_names": ["get_weather"], "turn2_content": "The current weather in Wellington is **12\u202f\u00b0C** with **overcast** skies.", "http": [200, 200]}
+verdict=PASS
+evidence=/home/sfxnz/projects/ai-lab/.wt/Nemotron-modernize/evidence/rehearsal-nemotron-20260902T234001Z/hermes_two_turn.txt
+==> probe hermes_two_turn PASS
+==> probe needle
+hit=1 prompt_tokens=21855 wall_s=3.895 ttft_s=3.806 prefill_tok_s=5742.8 salt=S1788392693971189578 needle=NEEDLECODE-7F3A91C2
+SUMMARY {"hit": 1, "prompt_tokens": 21855, "wall_s": 3.895, "ttft_s": 3.806, "prefill_tok_s": 5742.8, "salt": "S1788392693971189578"}
+verdict=PASS
+evidence=/home/sfxnz/projects/ai-lab/.wt/Nemotron-modernize/evidence/rehearsal-nemotron-20260902T234001Z/needle-8192.txt
+==> probe needle PASS
+evidence=/home/sfxnz/projects/ai-lab/.wt/Nemotron-modernize/evidence/rehearsal-nemotron-20260902T234001Z/probes.json
