@@ -1,0 +1,2 @@
+utc	git_head_sha	criteria_total	passed	failed	critic_models
+20260902T234827Z	52c95954c0978f692c47689ee87886a8151f24e1	60	39	17	grok-4.6,grok-4.6,grok-4.6
