@@ -1,0 +1,42 @@
+# Read by Sparkline (https://github.com/sfxnz/sparkline) to serve this recipe with one click.
+# It declares what run.sh does by hand. Keep the two in step.
+schema = 1
+name = "Nemotron 3.5 Lightning 30B-A3B NVFP4"
+nodes = 1
+port = 8000
+min_available_gib = 100     # --gpu-memory-utilization 0.8 leaves about 15 GiB on a 121 GiB Spark
+disk_gib = 50               # about 24 GiB of weights and a 22.5 GB image on a first start
+start_timeout_min = 20
+
+[image]
+ref = "vllm/vllm-openai@sha256:0a51ea5b4ae2dc5d81890e5173f54203d2a3ae0cfffe51b8fd2afd4391bfd967"  # v0.27.1
+
+[[model]]
+repo = "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4"
+revision = "b14872a58afd94e2fbbc1e5a1fe4ebb7dfdc5fdd"
+
+[[model]]                   # the DSpark draft model
+repo = "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark"
+revision = "d10c6ff40d6e69d1f92e407e027de3eafdb77645"
+
+[container]
+shm_gib = 4
+hf_cache = "/cache/huggingface"
+args = [
+  "{model.0}", "--revision", "{revision.0}",
+  "--host", "0.0.0.0", "--port", "{port}", "--tensor-parallel-size", "1",
+  "--gpu-memory-utilization", "0.8", "--max-model-len", "262144", "--trust-remote-code",
+  "--quantization", "modelopt_mixed", "--kv-cache-dtype", "fp8", "--moe-backend", "marlin",
+  "--max-num-seqs", "4", "--enable-auto-tool-choice", "--tool-call-parser", "qwen3_coder",
+  "--reasoning-parser", "nemotron_v3", "--enable-prefix-caching",
+  "--mamba-backend", "flashinfer", "--mamba-cache-mode", "align",
+  "--speculative_config.method", "dspark", "--speculative_config.num_speculative_tokens", "3",
+  "--speculative_config.model", "{snapshot.1}",
+]
+
+[container.env]
+HF_HOME = "/cache/huggingface"
+HF_HUB_OFFLINE = "1"
+CUTE_DSL_ARCH = "sm_121a"
+TORCH_CUDA_ARCH_LIST = "12.1a"
+FLASHINFER_CUDA_ARCH_LIST = "12.1a"
